@@ -1,0 +1,105 @@
+<% content_for :title, "pgroll phone" %>
+
+<p class="notice"><%= notice %></p>
+<p class="alert"><%= alert %></p>
+
+<section class="config">
+  <h1>pgroll phone</h1>
+  <p>Database URL and search paths are read from <code>config/pgroll.yml</code>.</p>
+  <dl>
+    <dt>url</dt>
+    <dd><code><%= Pgroll.url %></code></dd>
+    <dt>old client</dt>
+    <dd><code><%= Pgroll.old_search_path %></code></dd>
+    <dt>new client</dt>
+    <dd><code><%= Pgroll.new_search_path %></code></dd>
+  </dl>
+</section>
+
+<section class="create">
+  <h2>Add a user through the old client</h2>
+  <%= form_with url: users_path, method: :post do %>
+    <label>
+      Name
+      <input type="text" name="name" required autocomplete="off">
+    </label>
+    <label>
+      Phone
+      <input type="text" name="phone" autocomplete="off" spellcheck="false">
+    </label>
+    <button type="submit">Insert user</button>
+  <% end %>
+</section>
+
+<div class="clients">
+  <section>
+    <h2>Old client</h2>
+    <p><code>search_path <%= Pgroll.old_search_path %></code>. Columns: name, users.phone.</p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>users.phone</th>
+          <th>Update primary phone</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @old_users.each do |user| %>
+          <tr>
+            <td><%= user.name %></td>
+            <td><code><%= user.phone.inspect %></code> <span>length <%= user.phone&.length %></span></td>
+            <td>
+              <%= form_with url: user_path(user), method: :patch do %>
+                <input type="text" name="phone" value="<%= user.phone %>" autocomplete="off" spellcheck="false" aria-label="New primary phone for <%= user.name %>">
+                <button type="submit">Update primary phone</button>
+              <% end %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2>New client</h2>
+    <p><code>search_path <%= Pgroll.new_search_path %></code>. users, plus every user_phones row.</p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>user_phones</th>
+          <th>Add phone with is_primary false</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @new_users.each do |user| %>
+          <tr>
+            <td><%= user.name %></td>
+            <td>
+              <% if user.user_phones.empty? %>
+                <span>no rows</span>
+              <% else %>
+                <ul>
+                  <% user.user_phones.sort_by { |phone| [phone.is_primary ? 0 : 1, phone.id] }.each do |phone| %>
+                    <li>
+                      <code><%= phone.phone.inspect %></code>
+                      length <%= phone.phone.length %>,
+                      is_primary <%= phone.is_primary %>
+                    </li>
+                  <% end %>
+                </ul>
+              <% end %>
+            </td>
+            <td>
+              <%= form_with url: user_user_phones_path(user), method: :post do %>
+                <input type="text" name="phone" required autocomplete="off" spellcheck="false" aria-label="Second phone for <%= user.name %>">
+                <input type="hidden" name="is_primary" value="false">
+                <button type="submit">Insert second phone</button>
+              <% end %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </section>
+</div>

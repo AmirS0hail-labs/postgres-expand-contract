@@ -1,0 +1,15 @@
+operations:
+  - sql:
+      up: |
+        CREATE TABLE user_phones (id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY, user_id integer NOT NULL REFERENCES users (id), phone text NOT NULL, is_primary boolean NOT NULL);
+        CREATE UNIQUE INDEX user_phones_one_primary ON user_phones (user_id) WHERE is_primary;
+        INSERT INTO user_phones (user_id, phone, is_primary) SELECT id, phone, true FROM users WHERE phone IS NOT NULL;
+        CREATE FUNCTION users_phone_to_user_phones() RETURNS trigger LANGUAGE plpgsql SET search_path = public AS $fn$ BEGIN IF current_setting('pgroll_phone.sync', true) = '1' THEN RETURN NEW; END IF; PERFORM set_config('pgroll_phone.sync', '1', true); IF NEW.phone IS NULL THEN UPDATE user_phones SET is_primary = false WHERE user_id = NEW.id AND is_primary; ELSE UPDATE user_phones SET phone = NEW.phone WHERE user_id = NEW.id AND is_primary; IF NOT FOUND THEN INSERT INTO user_phones (user_id, phone, is_primary) VALUES (NEW.id, NEW.phone, true); END IF; END IF; PERFORM set_config('pgroll_phone.sync', '0', true); RETURN NEW; END; $fn$;
+        CREATE FUNCTION user_phones_to_users_phone() RETURNS trigger LANGUAGE plpgsql SET search_path = public AS $fn$ BEGIN IF current_setting('pgroll_phone.sync', true) = '1' THEN RETURN NEW; END IF; IF NEW.is_primary IS NOT TRUE THEN RETURN NEW; END IF; PERFORM set_config('pgroll_phone.sync', '1', true); UPDATE users SET phone = NEW.phone WHERE id = NEW.user_id; PERFORM set_config('pgroll_phone.sync', '0', true); RETURN NEW; END; $fn$;
+        CREATE TRIGGER users_phone_to_user_phones AFTER INSERT OR UPDATE OF phone ON users FOR EACH ROW EXECUTE FUNCTION users_phone_to_user_phones();
+        CREATE TRIGGER user_phones_to_users_phone AFTER INSERT OR UPDATE OF phone, is_primary ON user_phones FOR EACH ROW EXECUTE FUNCTION user_phones_to_users_phone();
+      down: |
+        DROP TABLE IF EXISTS user_phones;
+        DROP TRIGGER IF EXISTS users_phone_to_user_phones ON users;
+        DROP FUNCTION IF EXISTS users_phone_to_user_phones();
+        DROP FUNCTION IF EXISTS user_phones_to_users_phone();

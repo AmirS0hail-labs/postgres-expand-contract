@@ -1,0 +1,3 @@
+url: postgres://amirsohail@localhost:5432/pgroll_phone_rails?sslmode=disable
+old_search_path: public_01_create_users
+new_search_path: public_02_extract_phones

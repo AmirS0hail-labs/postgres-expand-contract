@@ -1,0 +1,13 @@
+operations:
+  - create_table:
+      name: users
+      columns:
+        - name: id
+          type: serial
+          pk: true
+        - name: name
+          type: text
+          nullable: false
+        - name: phone
+          type: text
+          nullable: true
