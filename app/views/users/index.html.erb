@@ -18,6 +18,7 @@
 
 <section class="create">
   <h2>Add a user through the old client</h2>
+  <p>Inserting a person opens the flow on that person's card, directly under this form. Play on a card replays that person's beats only.</p>
   <%= form_with url: users_path, method: :post do %>
     <label>
       Name
@@ -31,75 +32,122 @@
   <% end %>
 </section>
 
-<div class="clients">
-  <section>
-    <h2>Old client</h2>
-    <p><code>search_path <%= Pgroll.old_search_path %></code>. Columns: name, users.phone.</p>
-    <table>
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>users.phone</th>
-          <th>Update primary phone</th>
-        </tr>
-      </thead>
-      <tbody>
-        <% @old_users.each do |user| %>
-          <tr>
-            <td><%= user.name %></td>
-            <td><code><%= user.phone.inspect %></code> <span>length <%= user.phone&.length %></span></td>
-            <td>
-              <%= form_with url: user_path(user), method: :patch do %>
-                <input type="text" name="phone" value="<%= user.phone %>" autocomplete="off" spellcheck="false" aria-label="New primary phone for <%= user.name %>">
-                <button type="submit">Update primary phone</button>
-              <% end %>
-            </td>
-          </tr>
-        <% end %>
-      </tbody>
-    </table>
-  </section>
+<% @people.each do |person| %>
+  <% user = person[:user] %>
+  <% phones = person[:phones].sort_by { |phone| [phone.is_primary ? 0 : 1, phone.id] } %>
+  <% extras = phones.reject(&:is_primary) %>
+  <% primary = phones.find(&:is_primary) %>
+  <% phone_text = user.phone.to_s %>
+  <% copied_text = primary ? primary.phone.to_s : phone_text %>
+  <% replaying = flash[:highlight_id].to_i == user.id %>
+  <% mode = replaying ? flash[:highlight].to_s : "" %>
+  <article class="person"
+           id="user-<%= user.id %>"
+           data-controller="person-flow"
+           data-person-flow-phone-value="<%= phone_text %>"
+           data-person-flow-copied-value="<%= copied_text %>"
+           data-person-flow-mode-value="<%= mode %>">
+    <header class="person-head">
+      <h2><%= user.name %></h2>
+      <button type="button" data-action="person-flow#play" data-person-flow-target="play" aria-pressed="false">Play</button>
+    </header>
 
-  <section>
-    <h2>New client</h2>
-    <p><code>search_path <%= Pgroll.new_search_path %></code>. users, plus every user_phones row.</p>
-    <table>
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>user_phones</th>
-          <th>Add phone with is_primary false</th>
-        </tr>
-      </thead>
-      <tbody>
-        <% @new_users.each do |user| %>
-          <tr>
-            <td><%= user.name %></td>
-            <td>
-              <% if user.user_phones.empty? %>
-                <span>no rows</span>
-              <% else %>
-                <ul>
-                  <% user.user_phones.sort_by { |phone| [phone.is_primary ? 0 : 1, phone.id] }.each do |phone| %>
-                    <li>
-                      <code><%= phone.phone.inspect %></code>
-                      length <%= phone.phone.length %>,
-                      is_primary <%= phone.is_primary %>
-                    </li>
-                  <% end %>
-                </ul>
-              <% end %>
-            </td>
-            <td>
-              <%= form_with url: user_user_phones_path(user), method: :post do %>
-                <input type="text" name="phone" required autocomplete="off" spellcheck="false" aria-label="Second phone for <%= user.name %>">
-                <input type="hidden" name="is_primary" value="false">
-                <button type="submit">Insert second phone</button>
-              <% end %>
-            </td>
-          </tr>
+    <div class="person-grid">
+      <div>
+        <h3>Old client</h3>
+        <p><%= term("search_path") %> <code><%= Pgroll.old_search_path %></code>. <%= term("users.phone") %>.</p>
+        <p>
+          <% if user.phone.nil? %>
+            <code>nil</code>
+          <% else %>
+            <code><%= user.phone.inspect %></code>
+            <span>length <%= user.phone.length %></span>
+          <% end %>
+        </p>
+        <%= form_with url: user_path(user), method: :patch do %>
+          <input type="text" name="phone" value="<%= user.phone %>" autocomplete="off" spellcheck="false" aria-label="New primary phone for <%= user.name %>">
+          <button type="submit">Update primary phone</button>
         <% end %>
-      </tbody>
-    </table>
-  </section>
-</div>
+      </div>
+
+      <div>
+        <h3>New client</h3>
+        <p><%= term("search_path") %> <code><%= Pgroll.new_search_path %></code>. Every <code>user_phones</code> row.</p>
+        <% if phones.empty? %>
+          <p>no rows</p>
+        <% else %>
+          <ul>
+            <% phones.each do |phone| %>
+              <li>
+                <code><%= phone.phone.inspect %></code>
+                length <%= phone.phone.length %>,
+                <%= term("is_primary", code: false) %> <%= phone.is_primary %>
+              </li>
+            <% end %>
+          </ul>
+        <% end %>
+        <%= form_with url: user_user_phones_path(user), method: :post do %>
+          <input type="text" name="phone" required autocomplete="off" spellcheck="false" aria-label="Second phone for <%= user.name %>">
+          <input type="hidden" name="is_primary" value="false">
+          <button type="submit">Insert second phone</button>
+        <% end %>
+      </div>
+    </div>
+
+    <div class="flow stage" data-person-flow-target="flow" hidden>
+      <div class="store-grid">
+        <div class="sheet is-active" data-lens="old">
+          <h3>Old client</h3>
+          <p><%= term("public_01_create_users") %> reads <code>users</code> in <%= term("public") %>.</p>
+          <div class="sheet-row">
+            <code class="phone" data-person-flow-target="oldPhone"><%= phone_text %></code>
+            <span class="len">length <span data-person-flow-target="oldLen"><%= phone_text.length %></span></span>
+          </div>
+        </div>
+
+        <div class="gates">
+          <p class="arrow" data-person-flow-target="forward">
+            <span aria-hidden="true">→</span>
+            <%= term("users_phone_to_user_phones") %>
+          </p>
+          <p class="flag" data-person-flow-target="flag">
+            <%= term("pgroll_phone.sync") %> = <code data-person-flow-target="flagValue">'0'</code>
+            <span class="flag-note">not a column</span>
+          </p>
+          <p class="arrow" data-person-flow-target="back">
+            <span aria-hidden="true">←</span>
+            <%= term("user_phones_to_users_phone") %>
+          </p>
+        </div>
+
+        <div class="sheet is-active" data-lens="new">
+          <h3><code>user_phones</code></h3>
+          <div class="sheet-row">
+            <code class="phone" data-person-flow-target="primaryPhone"><%= copied_text %></code>
+            <span><%= term("is_primary", code: false) %> true</span>
+            <span class="len">length <span data-person-flow-target="primaryLen"><%= copied_text.length %></span></span>
+          </div>
+          <% extras.each do |extra_phone| %>
+            <% appearing = mode == "secondary" && extra_phone.id == flash[:highlight_phone_id].to_i %>
+            <div class="sheet-row extra<%= " is-pending" if appearing %>" data-person-flow-target="extraRow">
+              <code class="phone" data-person-flow-target="extraPhone"><%= extra_phone.phone %></code>
+              <span>not <%= term("users.phone") %></span>
+              <span class="len">length <span data-person-flow-target="extraLen"><%= extra_phone.phone.to_s.length %></span></span>
+            </div>
+          <% end %>
+        </div>
+      </div>
+      <div class="beats" data-person-flow-target="beats" aria-live="polite">
+        <p class="beat" data-person-flow-target="beat" hidden>This phone was written through the old client. It is <%= term("users.phone") %>.</p>
+        <p class="beat" data-person-flow-target="beat" hidden><%= term("users_phone_to_user_phones") %> copies that exact string, including a leading space, onto the <code>user_phones</code> row where <%= term("is_primary", code: false) %> is true.</p>
+        <p class="beat" data-person-flow-target="beat" hidden><%= term("pgroll_phone.sync") %> becomes <code>'1'</code>, so the return trigger does not write <%= term("users.phone") %> again.</p>
+      </div>
+      <p class="beat secondary-beat" data-person-flow-target="secondaryBeat" hidden>This phone is not <%= term("users.phone") %>. The new phone appears, and the old client's phone does not change.</p>
+      <p class="beat empty-beat" data-person-flow-target="emptyBeat" hidden>This person has no phone, so there is no <%= term("users.phone") %> to copy.</p>
+      <p class="means"><%= term("users.phone") %> means the <code>user_phones</code> row where <%= term("is_primary", code: false) %> is true.</p>
+      <code class="token phone" data-person-flow-target="token" hidden aria-hidden="true"></code>
+    </div>
+  </article>
+<% end %>
+
+<p class="complete"><%= term("pgroll complete", code: false) %> would drop <%= term("public_01_create_users") %>. <%= term("OldUser") %> would then have no schema to use.</p>
