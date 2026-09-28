@@ -5,20 +5,18 @@
 
 <section class="config">
   <h1>pgroll phone</h1>
-  <p>Database URL and search paths are read from <code>config/pgroll.yml</code>.</p>
+  <p>Both clients use one database. The schema names come from <code>config/pgroll.yml</code>.</p>
   <dl>
-    <dt>url</dt>
-    <dd><code><%= Pgroll.url %></code></dd>
-    <dt>old client</dt>
-    <dd><code><%= Pgroll.old_search_path %></code></dd>
-    <dt>new client</dt>
-    <dd><code><%= Pgroll.new_search_path %></code></dd>
+    <dt><%= term("old client", code: false) %></dt>
+    <dd><%= term(Pgroll.old_search_path) %></dd>
+    <dt><%= term("new client", code: false) %></dt>
+    <dd><%= term(Pgroll.new_search_path) %></dd>
   </dl>
 </section>
 
 <section class="create">
-  <h2>Add a user through the old client</h2>
-  <p>Inserting a person opens the flow on that person's card, directly under this form. Play on a card replays that person's beats only.</p>
+  <h2>Add a user through the <%= term("old client", code: false) %></h2>
+  <p>This writes one phone the way the old client does. A leading space stays in the string. The new card opens under this form, and Play replays only that person.</p>
   <%= form_with url: users_path, method: :post do %>
     <label>
       Name
@@ -54,8 +52,7 @@
 
     <div class="person-grid">
       <div>
-        <h3>Old client</h3>
-        <p><%= term("search_path") %> <code><%= Pgroll.old_search_path %></code>. <%= term("users.phone") %>.</p>
+        <h3><%= term("old client", code: false) %></h3>
         <p>
           <% if user.phone.nil? %>
             <code>nil</code>
@@ -71,8 +68,7 @@
       </div>
 
       <div>
-        <h3>New client</h3>
-        <p><%= term("search_path") %> <code><%= Pgroll.new_search_path %></code>. Every <code>user_phones</code> row.</p>
+        <h3><%= term("new client", code: false) %></h3>
         <% if phones.empty? %>
           <p>no rows</p>
         <% else %>
@@ -97,8 +93,7 @@
     <div class="flow stage" data-person-flow-target="flow" hidden>
       <div class="store-grid">
         <div class="sheet is-active" data-lens="old">
-          <h3>Old client</h3>
-          <p><%= term("public_01_create_users") %> reads <code>users</code> in <%= term("public") %>.</p>
+          <h3><%= term("old client", code: false) %></h3>
           <div class="sheet-row">
             <code class="phone" data-person-flow-target="oldPhone"><%= phone_text %></code>
             <span class="len">length <span data-person-flow-target="oldLen"><%= phone_text.length %></span></span>
@@ -144,7 +139,6 @@
       </div>
       <p class="beat secondary-beat" data-person-flow-target="secondaryBeat" hidden>This phone is not <%= term("users.phone") %>. The new phone appears, and the old client's phone does not change.</p>
       <p class="beat empty-beat" data-person-flow-target="emptyBeat" hidden>This person has no phone, so there is no <%= term("users.phone") %> to copy.</p>
-      <p class="means"><%= term("users.phone") %> means the <code>user_phones</code> row where <%= term("is_primary", code: false) %> is true.</p>
       <code class="token phone" data-person-flow-target="token" hidden aria-hidden="true"></code>
     </div>
   </article>

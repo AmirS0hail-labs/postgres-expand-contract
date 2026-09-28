@@ -97,7 +97,6 @@ export default class extends Controller {
       this.keepInView(this.secondaryBeatTarget)
     }
     this.oldPhoneTarget.classList.add("is-steady")
-    this.backTarget.dataset.stop = "does not write users.phone"
     this.backTarget.classList.add("is-stopped")
 
     const row = this.pendingRow()
@@ -179,7 +178,6 @@ export default class extends Controller {
   raiseFlag() {
     this.flagValueTarget.textContent = "'1'"
     this.flagTarget.classList.add("is-on")
-    this.backTarget.dataset.stop = "does not write users.phone"
     this.backTarget.classList.add("is-stopped")
   }
 

@@ -317,7 +317,7 @@ label, form {
   color: #9a3412;
 }
 
-.arrow.is-stopped::after {
+.arrow.is-stopped[data-stop]::after {
   content: attr(data-stop);
   display: block;
 }
