@@ -5,6 +5,7 @@
 
 <section class="config">
   <h1>pgroll phone</h1>
+  <p>A user started with one phone column. <%= term("pgroll", code: false) %> is moving that to many rows in <code>user_phones</code> while the old code and the new code stay up on the same database, so the change has no downtime.</p>
   <p>Both clients use one database. The schema names come from <code>config/pgroll.yml</code>.</p>
   <dl>
     <dt><%= term("old client", code: false) %></dt>

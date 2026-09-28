@@ -6,6 +6,7 @@ module ApplicationHelper
     "public" => "The schema that holds the real tables users and user_phones. The rows are stored once.",
     "public_01_create_users" => "The old client's schema. It has one view, users, defined as SELECT id, name, phone FROM users.",
     "public_02_extract_phones" => "The new client's schema. It has views users and user_phones.",
+    "pgroll" => "A Postgres migration tool. It serves the new schema beside the old one until the change is completed.",
     "old client" => "Code that still stores one phone on the user. It uses public_01_create_users.",
     "new client" => "Code that stores each phone as its own row. It uses public_02_extract_phones.",
     "OldUser" => "The old client. It sets search_path to public_01_create_users, so users means that view.",
