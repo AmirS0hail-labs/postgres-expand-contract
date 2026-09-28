@@ -39,3 +39,6 @@
 
 # macOS
 .DS_Store
+
+# Personal notes
+/observation_and_notes.md
