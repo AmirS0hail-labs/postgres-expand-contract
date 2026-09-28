@@ -1,0 +1,50 @@
+<div class="flow stage" data-person-flow-target="flow" hidden>
+  <div class="store-grid">
+    <div class="sheet is-active" data-lens="old">
+      <h3><%= term("old client", code: false) %></h3>
+      <div class="sheet-row">
+        <code class="phone" data-person-flow-target="oldPhone"><%= person.phone_text %></code>
+        <span class="len">length <span data-person-flow-target="oldLen"><%= person.phone_text.length %></span></span>
+      </div>
+    </div>
+
+    <div class="gates">
+      <p class="arrow" data-person-flow-target="forward">
+        <span aria-hidden="true">→</span>
+        <%= term("users_phone_to_user_phones") %>
+      </p>
+      <p class="flag" data-person-flow-target="flag">
+        <%= term("pgroll_phone.sync") %> = <code data-person-flow-target="flagValue">'0'</code>
+        <span class="flag-note">not a column</span>
+      </p>
+      <p class="arrow" data-person-flow-target="back">
+        <span aria-hidden="true">←</span>
+        <%= term("user_phones_to_users_phone") %>
+      </p>
+    </div>
+
+    <div class="sheet is-active" data-lens="new">
+      <h3><code>user_phones</code></h3>
+      <div class="sheet-row">
+        <code class="phone" data-person-flow-target="primaryPhone"><%= person.copied_text %></code>
+        <span><%= term("is_primary", code: false) %> true</span>
+        <span class="len">length <span data-person-flow-target="primaryLen"><%= person.copied_text.length %></span></span>
+      </div>
+      <% person.extra_phones.each do |extra_phone| %>
+        <div class="sheet-row extra<%= " is-pending" if person.appearing?(extra_phone) %>" data-person-flow-target="extraRow">
+          <code class="phone" data-person-flow-target="extraPhone"><%= extra_phone.phone %></code>
+          <span>not <%= term("users.phone") %></span>
+          <span class="len">length <span data-person-flow-target="extraLen"><%= extra_phone.phone.to_s.length %></span></span>
+        </div>
+      <% end %>
+    </div>
+  </div>
+  <div class="beats" data-person-flow-target="beats" aria-live="polite">
+    <p class="beat" data-person-flow-target="beat" hidden>This phone was written through the old client. It is <%= term("users.phone") %>.</p>
+    <p class="beat" data-person-flow-target="beat" hidden><%= term("users_phone_to_user_phones") %> copies that exact string, including a leading space, onto the <code>user_phones</code> row where <%= term("is_primary", code: false) %> is true.</p>
+    <p class="beat" data-person-flow-target="beat" hidden><%= term("pgroll_phone.sync") %> becomes <code>'1'</code>, so the return trigger does not write <%= term("users.phone") %> again.</p>
+  </div>
+  <p class="beat secondary-beat" data-person-flow-target="secondaryBeat" hidden>This phone is not <%= term("users.phone") %>. The new phone appears, and the old client's phone does not change.</p>
+  <p class="beat empty-beat" data-person-flow-target="emptyBeat" hidden>This person has no phone, so there is no <%= term("users.phone") %> to copy.</p>
+  <code class="token phone" data-person-flow-target="token" hidden aria-hidden="true"></code>
+</div>

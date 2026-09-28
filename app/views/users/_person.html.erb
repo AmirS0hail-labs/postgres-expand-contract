@@ -1,0 +1,53 @@
+<article class="person"
+         id="user-<%= person.user.id %>"
+         data-controller="person-flow"
+         data-person-flow-phone-value="<%= person.phone_text %>"
+         data-person-flow-copied-value="<%= person.copied_text %>"
+         data-person-flow-mode-value="<%= person.replay_mode %>">
+  <header class="person-head">
+    <h2><%= person.user.name %></h2>
+    <button type="button" data-action="person-flow#play" data-person-flow-target="play" aria-pressed="false">Play</button>
+  </header>
+
+  <div class="person-grid">
+    <div>
+      <h3><%= term("old client", code: false) %></h3>
+      <p>
+        <% if person.user.phone.nil? %>
+          <code>nil</code>
+        <% else %>
+          <code><%= person.user.phone.inspect %></code>
+          <span>length <%= person.user.phone.length %></span>
+        <% end %>
+      </p>
+      <%= form_with url: user_path(person.user), method: :patch do %>
+        <input type="text" name="phone" value="<%= person.user.phone %>" autocomplete="off" spellcheck="false" aria-label="New primary phone for <%= person.user.name %>">
+        <button type="submit">Update primary phone</button>
+      <% end %>
+    </div>
+
+    <div>
+      <h3><%= term("new client", code: false) %></h3>
+      <% if person.phones.empty? %>
+        <p>no rows</p>
+      <% else %>
+        <ul>
+          <% person.phones.each do |phone| %>
+            <li>
+              <code><%= phone.phone.inspect %></code>
+              length <%= phone.phone.length %>,
+              <%= term("is_primary", code: false) %> <%= phone.is_primary %>
+            </li>
+          <% end %>
+        </ul>
+      <% end %>
+      <%= form_with url: user_user_phones_path(person.user), method: :post do %>
+        <input type="text" name="phone" required autocomplete="off" spellcheck="false" aria-label="Second phone for <%= person.user.name %>">
+        <input type="hidden" name="is_primary" value="false">
+        <button type="submit">Insert second phone</button>
+      <% end %>
+    </div>
+  </div>
+
+  <%= render "flow", person: person %>
+</article>

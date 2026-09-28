@@ -1,16 +1,14 @@
 class UserPhonesController < ApplicationController
+  include HighlightsPerson
+
   def create
     phone = UserPhone.create!(
       user_id: params[:user_id],
       phone: params[:phone],
       is_primary: false
     )
-    flash[:highlight] = "secondary"
-    flash[:highlight_id] = phone.user_id
-    flash[:highlight_phone] = phone.phone.to_s
-    flash[:highlight_phone_id] = phone.id
-    redirect_to root_path
+    highlight_and_redirect(phone.user_id, "secondary", phone: phone)
   rescue ActiveRecord::ActiveRecordError => error
-    redirect_to root_path, alert: error.message
+    redirect_record_error(error)
   end
 end
